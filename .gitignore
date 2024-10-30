@@ -2,6 +2,7 @@
 certs/
 
 .DS_Store
+tmp/
 
 .terraform
 *.pem
@@ -32,5 +33,3 @@ ignore/*
 
 # Local History for Visual Studio Code
 .history/
-
-
