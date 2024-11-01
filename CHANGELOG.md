@@ -8,5 +8,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changetype (<https://keepachangelog.com/en/1.0.0/#how>)
 
-- Initialized repo with charts
+- Initialized repo with charts istio-base and istiod
 - Generated README.md

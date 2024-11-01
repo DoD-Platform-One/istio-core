@@ -1,7 +1,7 @@
 apiVersion: kpt.dev/v1alpha1
 kind: Kptfile
 metadata:
-  name: istio-discovery
+  name: istiod
 upstream:
   type: git
   git:

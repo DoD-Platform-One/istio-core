@@ -1,7 +1,20 @@
 # How to upgrade the Istio ControlPlane Package chart
 
 1. Checkout the branch that renovate created. This branch will have the image tag updates and typically some other necessary version changes that you will want. You can either work off of this branch or branch off of it.
-1. Update the dashboards via `kpt`. You should be able to run `kpt pkg update chart/dashboards@<version> --strategy force-delete-replace` (ex: `kpt pkg update chart/dashboards@1.14.3 --strategy force-delete-replace`).
+1. Update via `kpt`:
+    ```bash
+    # update to VERSION of the upstream charts auto-merging in changes
+    kpt pkg update base@1.23.2 --strategy alpha-git-patch
+    kpt pkg update istiod@1.23.2 --strategy alpha-git-patch
+    ```
+    Or if you'd like to pull down upstream to a fresh `DIR` and manually merge in the changes yourself:
+    ```bash
+    # get a fresh VERSION of the upstream chart to DIR
+    VERSION=1.23.2
+    DIR=./fresh
+    kpt pkg get "https://github.com/istio/istio.git/manifests/charts/base@$VERSION" "$DIR/base"
+    kpt pkg get "https://github.com/istio/istio.git/manifests/charts/istio-control/istio-discovery@$VERSION" "$DIR/istiod"
+    ```
 1. Update version references for the Chart. `version` should be `<version>-bb.0` (ex: `1.14.3-bb.0`) and `appVersion` should be `<version>` (ex: `1.14.3`). Also validate that the BB annotation for the main Istio version is updated (leave the Tetrate version as-is unless you are updating those images).
 1. Verify that chart/values.yaml `tag` and `tidTAG` have been updated to the new version.
 1. Add a changelog entry for the update. At minimum mention updating the image versions.
