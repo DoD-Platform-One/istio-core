@@ -2,43 +2,5 @@ global:
   variant: ""
   tag: 1.23.2
   hub: registry1.dso.mil/ironbank/opensource/istio
-#  imagePullSecrets:
-#  - private-registry
-
-# istiod:
-#   enabled: true
-#   #profile: ambient
-
-# ztunnel:
-#   profile: ambient
-
-# cni:
-#   cni:
-#     ambient:
-#       enabled: true
-
-# domain: dev.bigbang.mil
-
-# gateways:
-#   main:
-#     enabled: true
-#     listeners:
-#     - name: https
-#       hostname: "*.{{ .Values.domain }}"
-#       port:
-#         number: 8443
-#         protocol: HTTPS
-#       tls:
-#         credentialName: "wildcard-cert"
-#         mode: Terminate
-  
-  # # Example of adding additional gateways
-  # private:
-  #   listeners:
-  #   - name: https-passthrough
-  #     hostname: "mypackage.{{ .Values.domain }}"
-  #     port:
-  #       number: 8443
-  #       protocol: HTTPS
-  #     tls:
-  #       mode: Passthrough
+  imagePullSecrets:
+  - private-registry

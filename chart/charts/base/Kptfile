@@ -1,7 +1,7 @@
 apiVersion: kpt.dev/v1alpha1
 kind: Kptfile
 metadata:
-  name: base
+  name: chart
 upstream:
   type: git
   git:

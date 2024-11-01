@@ -236,12 +236,19 @@ defaults:
     # Default hub for Istio images.
     # Releases are published to docker hub under 'istio' project.
     # Dev builds from prow are on gcr.io
-    hub: gcr.io/istio-testing
+    hub: "registry1.dso.mil/ironbank/opensource/istio"
     # Default tag for Istio images.
-    tag: latest
+    tag: "1.23.2"
     # Variant of the image to use.
     # Currently supported are: [debug, distroless]
     variant: ""
+    
+    # -- Tetrate Istio Distribution - Tetrate provides FIPs verified Istio and Envoy software and support,
+    # validated through the FIPs Boring Crypto module.
+    # Find out more from Tetrate - https://www.tetrate.io/tetrate-istio-subscription
+    enterprise: false
+    tidHub: registry1.dso.mil/ironbank/tetrate/istio
+    tidTag: 1.23.2-tetratefips-v0
 
     # Specify image pull policy if default behavior isn't desired.
     # Default behavior: latest images will be Always else IfNotPresent.
@@ -252,8 +259,9 @@ defaults:
     # For components that don't use ServiceAccounts (i.e. grafana, servicegraph, tracing)
     # ImagePullSecrets will be added to the corresponding Deployment(StatefulSet) objects.
     # Must be set for any cluster configured with private docker registry.
-    imagePullSecrets: []
-    # - private-registry-key
+    # This secret will need to be manually created if this chart is deployed outside of the BB umbrella chart
+    imagePullSecrets: 
+      - private-registry
 
     # Enabled by default in master for maximising testing.
     istiod:
