@@ -16,3 +16,4 @@ dependencies:
   - name: istiod
     version: 1.23.2
     repository: file://chart/charts/istiod
+
