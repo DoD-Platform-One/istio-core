@@ -238,7 +238,7 @@ defaults:
     # Dev builds from prow are on gcr.io
     hub: "registry1.dso.mil/ironbank/opensource/istio"
     # Default tag for Istio images.
-    tag: "1.23.2"
+    tag: "1.23.3"
     # Variant of the image to use.
     # Currently supported are: [debug, distroless]
     variant: ""
@@ -248,7 +248,7 @@ defaults:
     # Find out more from Tetrate - https://www.tetrate.io/tetrate-istio-subscription
     enterprise: false
     tidHub: registry1.dso.mil/ironbank/tetrate/istio
-    tidTag: 1.23.2-tetratefips-v0
+    tidTag: 1.23.3-tetratefips-v0
 
     # Specify image pull policy if default behavior isn't desired.
     # Default behavior: latest images will be Always else IfNotPresent.
