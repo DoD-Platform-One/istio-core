@@ -2,18 +2,20 @@ apiVersion: v2
 name: istio3
 description: Helm umbrella chart for istio
 type: application
-version: 1.23.2-bb.0
-appVersion: 1.23.2
+version: 1.23.3-bb.0
+appVersion: 1.23.3
 keywords:
   - istio
   - istiod
   - gateway
 icon: https://istio.io/latest/favicons/android-192x192.png
+annotations:
+    bigbang.dev/maintenanceTrack: bb_integrated
 dependencies:
   - name: base
-    version: 1.23.2
+    version: 1.23.3
     repository: file://chart/charts/base
   - name: istiod
-    version: 1.23.2
+    version: 1.23.3
     repository: file://chart/charts/istiod
 

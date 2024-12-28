@@ -1,7 +1,7 @@
 apiVersion: v2
 name: base
-version: 1.23.2-bb.0
-appVersion: 1.23.2
+version: 1.23.3-bb.0
+appVersion: 1.23.3
 description: Helm chart for deploying Istio cluster resources and CRDs
 keywords:
   - istio
