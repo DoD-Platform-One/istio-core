@@ -2,7 +2,7 @@ apiVersion: v2
 name: istio3
 description: Helm umbrella chart for istio
 type: application
-version: 1.23.3-bb.0
+version: 1.23.3-bb.1
 appVersion: 1.23.3
 keywords:
   - istio

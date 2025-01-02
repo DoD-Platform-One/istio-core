@@ -177,3 +177,22 @@ Some things aren't tested by the package pipeline, but are tested by the BigBang
 ## Instructions for Integration Testing
 
 See the [Big Bang Doc](https://repo1.dso.mil/big-bang/bigbang/-/blob/master/docs/developer/test-package-against-bb.md?ref_type=heads)
+
+## Modifications made to the upstream chart
+
+### [chart/charts/istiod/values.yaml](../chart/charts/istiod/values.yaml)
+
+- Ensure the following remains under the `meshConfig` section to enable standard out logging and enforce a minimum TLS version for mTLS:
+
+```
+    accessLogFile: /dev/stdout
+    meshMTLS:
+      minProtocolVersion: TLSV1_2
+```
+
+- Ensure the following mTLS section remains so peer authenication and mTLS work as expected:
+
+```
+mtls:
+  mode: STRICT
+```
