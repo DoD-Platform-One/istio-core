@@ -196,3 +196,14 @@ See the [Big Bang Doc](https://repo1.dso.mil/big-bang/bigbang/-/blob/master/docs
 mtls:
   mode: STRICT
 ```
+
+- Ensure the following is present as part of support for network policies:
+
+```
+networkPolicies:
+  enabled: false
+  additionalPolicies: []
+
+monitoring:
+  enabled: false
+```
