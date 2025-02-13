@@ -1,5 +1,5 @@
 <!-- Warning: Do not manually edit this file. See notes on gluon + helm-docs at the end of this file for more information. -->
-# istio3
+# istio-core
 
 ![Version: 1.23.3-bb.2](https://img.shields.io/badge/Version-1.23.3--bb.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.23.3](https://img.shields.io/badge/AppVersion-1.23.3-informational?style=flat-square) ![Maintenance Track: bb_integrated](https://img.shields.io/badge/Maintenance_Track-bb_integrated-green?style=flat-square)
 
@@ -37,7 +37,7 @@ https://helm.sh/docs/intro/install/
 - cd into directory
 
 ```bash
-helm install istio3 chart/
+helm install istio-core chart/
 ```
 
 ## Values

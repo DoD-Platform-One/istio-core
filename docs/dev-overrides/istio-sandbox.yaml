@@ -9,7 +9,7 @@ istio:
 istioOperator:
   enabled: false
 
-istio3:
+istioCore:
   enabled: true
 istioGatewayPublic:
   enabled: true
