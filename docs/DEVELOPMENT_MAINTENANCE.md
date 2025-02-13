@@ -28,12 +28,12 @@ Generally the base/istiod update should be tested alongside the new gateway vers
 
 ## Branch/Tag Config
 
-If you'd like to install from a specific branch or tag, then the code block under istio3 needs to be uncommented and used to target your changes.
+If you'd like to install from a specific branch or tag, then the code block under istioCore needs to be uncommented and used to target your changes.
 
 For example, this would target the `renovate/ironbank` branch.
 
 ```
-istio3:
+istioCore:
   enabled: true
   <other config/labels>
   ...
