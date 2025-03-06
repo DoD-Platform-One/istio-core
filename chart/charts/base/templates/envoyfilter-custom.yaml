@@ -1,0 +1,11 @@
+{{/* Allow the user to add their own EnvoyFilters as a part of the helm chart */}}
+{{- range .Values.envoyFilters }}
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: {{ .name }}
+  namespace: {{ .namespace }}
+spec:
+  {{- toYaml .spec | nindent 2 }}
+{{- end}}

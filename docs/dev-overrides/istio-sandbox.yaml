@@ -11,6 +11,9 @@ istioOperator:
 
 istioCore:
   enabled: true
+  git:
+    tag: null
+    branch: "envoyfilter-addition"
 istioGatewayPublic:
   enabled: true
 istioGatewayPassthrough:
