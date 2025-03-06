@@ -2,7 +2,6 @@
 # For instance, instead of `--set defaults.foo=bar`, just set `--set foo=bar`.
 defaults:
   global:
-
     # ImagePullSecrets for control plane ServiceAccount, list of secrets in the same namespace
     # to use for pulling any images in pods that reference this ServiceAccount.
     # Must be set for any cluster configured with private docker registry.
@@ -24,6 +23,14 @@ defaults:
     ipFamilyPolicy: ""
     ipFamilies: []
 
+    # Adds a default EnvoyFilter to increase the security of the Istio cluster adding the following headers to all gateway-enabled Virtual Services:
+    # Strict-Transport-Security: max-age=31536000; includeSubDomains
+    # X-Frame-Options: SAMEORIGIN
+    # X-Content-Type-Options: nosniff
+    # Referrer-Policy: strict-origin
+    defaultSecurityHeaders:
+      enabled: true
+
   base:
     # Used for helm2 to add the CRDs to templates.
     enableCRDTemplates: false
@@ -40,3 +47,29 @@ defaults:
   defaultRevision: "default"
   experimental:
     stableValidationPolicy: false
+  # -- Custom EnvoyFilters. https://istio.io/latest/docs/reference/config/networking/envoy-filter/
+  envoyFilters:
+    []
+    # # For each filter, specify `name`, `namespace`, and `spec` fields
+    # # The following example configures ratelimits for the domain foo.com
+    # - name: ratelimits
+    #   namespace: istio-system
+    #   spec:
+    #     configPatches:
+    #       - applyTo: VIRTUAL_HOST
+    #         match:
+    #           context: GATEWAY
+    #           routeConfiguration:
+    #             vhost:
+    #               domainName: "foo.com"
+    #         patch:
+    #           operation: MERGE
+    #           value:
+    #             rate_limits:
+    #               actions:
+    #                 - request_headers:
+    #                     header_name: "authorization"
+    #                     descriptor_key: "jwt"
+    #                 - request_headers:
+    #                     header_name: ":path"
+    #                     descriptor_key: "path"
