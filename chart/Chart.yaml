@@ -11,6 +11,17 @@ keywords:
 icon: https://istio.io/latest/favicons/android-192x192.png
 annotations:
   bigbang.dev/maintenanceTrack: bb_integrated
+  bigbang.dev/upstreamReleaseNotesMarkdown: |
+    This package combines the upstream 
+    [`istiod`](https://github.com/istio/istio/tree/master/manifests/charts/istio-control/istio-discovery)
+    and 
+    [`base`](https://github.com/istio/istio/tree/master/manifests/charts/base) 
+    helm charts from the Istio project. All of the Istio components,
+    including the helm charts, are released in sync as part of
+    the larger Istio project's release cycle.
+
+    You can find the upstream Istio release notes
+    [here](https://istio.io/latest/news/releases/).
 dependencies:
   - name: base
     version: 1.23.3

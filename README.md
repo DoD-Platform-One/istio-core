@@ -7,14 +7,16 @@ Helm umbrella chart for istio
 
 ## Upstream Release Notes
 
-This package has no upstream release note links on file. Please add some to [chart/Chart.yaml](chart/Chart.yaml) under `annotations.bigbang.dev/upstreamReleaseNotesMarkdown`.
-Example:
-```yaml
-annotations:
-  bigbang.dev/upstreamReleaseNotesMarkdown: |
-    - [Find our upstream chart's CHANGELOG here](https://link-goes-here/CHANGELOG.md)
-    - [and our upstream application release notes here](https://another-link-here/RELEASE_NOTES.md)
-```
+This package combines the upstream
+[`istiod`](https://github.com/istio/istio/tree/master/manifests/charts/istio-control/istio-discovery)
+and
+[`base`](https://github.com/istio/istio/tree/master/manifests/charts/base)
+helm charts from the Istio project. All of the Istio components,
+including the helm charts, are released in sync as part of
+the larger Istio project's release cycle.
+
+You can find the upstream Istio release notes
+[here](https://istio.io/latest/news/releases/).
 
 ## Learn More
 
