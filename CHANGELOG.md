@@ -3,6 +3,13 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
+
+## [1.23.3-bb.4] - 2024-03-27
+
+### Added
+
+- Added an `EnvoyFilter` to simplify classification banner creation
+
 ## [1.23.3-bb.3] - 2024-03-04
 
 ### Added
@@ -14,7 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-- Added required network policies per https://istio.io/latest/docs/ops/deployment/application-requirements/
+- Added required network policies per <https://istio.io/latest/docs/ops/deployment/application-requirements/>
 - Updated values.yaml to support network policies and additional network policies (user-supplied)
 - Updated dev maintenance documentation
 
@@ -30,7 +37,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changetype (<https://keepachangelog.com/en/1.0.0/#how>)
 
 - Updated Istiod and Base charts to 1.23.3
-
 
 ## [1.23.2-bb.0] - 2024-10-28
 

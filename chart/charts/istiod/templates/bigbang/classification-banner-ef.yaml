@@ -1,0 +1,379 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: classification-banner
+  namespace: istio-system
+spec:
+  workloadSelector:
+    labels:
+      classification-banner.bigbang.dev/inject: "true"
+  configPatches:
+    - applyTo: HTTP_FILTER
+      match:
+        context: SIDECAR_INBOUND
+        listener:
+          filterChain:
+            filter:
+              name: envoy.filters.network.http_connection_manager
+              subFilter:
+                name: envoy.filters.http.router
+      patch:
+        operation: INSERT_BEFORE
+        value:
+          name: envoy.lua.classification-banner
+          typed_config:
+            "@type": "type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua"
+            inlineCode: |
+              -----------------------------------------------------------------------------------------------
+              local ANNOTATIONS = {
+                -- If set, overrides *all* classification logic with raw HTML
+                CUSTOM_HTML = "classification-banner.bigbang.dev/custom-html",
+                
+                -- The classification level (e.g., "Secret", "TS", "CUI") 
+                -- (We handle synonyms & lookups via classification_synonyms)
+                CLASSIFICATION_LEVEL = "classification-banner.bigbang.dev/classification-level",
+                
+                -- Whether to inject a bottom banner (boolean-ish: "true"/"yes"/"1")
+                BOTTOM_BANNER = "classification-banner.bigbang.dev/bottom-banner",
+                
+                -- Optional override text for the banner
+                TEXT = "classification-banner.bigbang.dev/text",
+                
+                -- Optional override for banner background color
+                BACKGROUND = "classification-banner.bigbang.dev/background",
+                
+                -- Optional override for banner text color
+                TEXT_COLOR = "classification-banner.bigbang.dev/text-color",
+                
+                -- Optional override for banner height (CSS dimension, e.g. "2rem")
+                HEIGHT = "classification-banner.bigbang.dev/height",
+                
+                -- Optional override for banner font size (CSS dimension)
+                FONT_SIZE = "classification-banner.bigbang.dev/font-size",
+              }
+              -----------------------------------------------------------------------------------------------
+              local classification_synonyms = {
+                ["unclassified"]        = "unclassified",
+                ["u"]                   = "unclassified",
+                ["controlled"]          = "controlled",
+                ["cui"]                 = "controlled",
+                ["uci"]                 = "controlled",
+                ["confidential"]        = "confidential",
+                ["secret"]              = "secret",
+                ["s"]                   = "secret",
+                ["top secret"]          = "top secret",
+                ["ts"]                  = "top secret",
+                ["top secret//sci"]     = "top secret//sci",
+                ["sci"]                 = "top secret//sci"
+              }
+
+              local classification_colors = {
+                ["unclassified"]    = { bg="#007a33", text="white", display_text="UNCLASSIFIED" },
+                ["controlled"]      = { bg="#502b85", text="white", display_text="CONTROLLED (CUI)" },
+                ["confidential"]    = { bg="#0033a0", text="white", display_text="CONFIDENTIAL" },
+                ["secret"]          = { bg="#c8102e", text="white", display_text="SECRET" },
+                ["top secret"]      = { bg="#ff8c00", text="black", display_text="TOP SECRET" },
+                ["top secret//sci"] = { bg="#fce83a", text="black", display_text="TOP SECRET//SCI" }
+              }
+              -----------------------------------------------------------------------------------------------
+              local cached_annotations = nil
+              local last_refresh_time = 0
+              local refresh_interval_seconds = 10
+
+              local function read_file(path)
+                local file = io.open(path, "r")
+                if file then
+                  local content = file:read("*all")
+                  file:close()
+                  return content
+                end
+                return nil
+              end
+
+              local function unescape_string(str)
+                if not str then return "" end
+                
+                local result = str:gsub("\\n", "\n")   -- newline
+                                :gsub("\\r", "\r")    -- carriage return
+                                :gsub("\\t", "\t")    -- tab
+                                :gsub('\\"', '"')     -- double quote
+                                :gsub("\\'", "'")     -- single quote
+                                :gsub("\\\\", "\\")   -- backslash
+                
+                return result
+              end
+
+              local function parse_metadata(content)
+                local result = {}
+                if content then
+                  content = content:gsub("\r\n", "\n")
+                  
+                  for line in content:gmatch("[^\n]+") do
+                    local key, value = line:match('([^=]+)="(.*)"$')
+                    if key and value then
+                      result[key] = unescape_string(value)
+                    end
+                  end
+                end
+                return result
+              end
+
+              local function get_annotations()
+                local now = os.time()
+                if (not cached_annotations) or ((now - last_refresh_time) >= refresh_interval_seconds) then
+                  local annotations_content = read_file("/etc/istio/pod/annotations")
+                  cached_annotations = parse_metadata(annotations_content or "")
+                  last_refresh_time = now
+                end
+                return cached_annotations
+              end
+
+              local function is_annotation_true(value)
+                if not value then return false end
+                local v = value:lower()
+                return (v == "true" or v == "yes" or v == "1")
+              end
+              -----------------------------------------------------------------------------------------------
+              function envoy_on_response(response_handle)
+                -- Only inject if content type is HTML
+                local headers = response_handle:headers()
+                local ctype = headers:get("content-type")
+                if not ctype then return end
+                ctype = ctype:lower()
+                if not ctype:find("text/html") then
+                  return
+                end
+
+                -- Grab cached annotations
+                local annotations = get_annotations()
+                response_handle:logDebug("Banner injector running with cached annotations.")
+
+                -------------------------------------------------------------------------------------------
+                -- Check for a full custom HTML override annotation and use it if present
+                -------------------------------------------------------------------------------------------
+                local custom_html = annotations[ANNOTATIONS.CUSTOM_HTML]
+                if custom_html and custom_html ~= "" then
+                  response_handle:logDebug("Using custom HTML override for banner.")
+                  -- We inject custom_html exactly, no classification logic
+                  inject_banner(response_handle, custom_html)
+                  return
+                end
+
+                -------------------------------------------------------------------------------------------
+                -- Otherwise, proceed with classification-based logic & annotation overrides
+                -------------------------------------------------------------------------------------------
+                response_handle:logDebug("No custom HTML override, using classification-based logic.")
+
+                -- Start with defaults
+                local banner_text = "UNCLASSIFIED"
+                local banner_bg_color = "darkgreen"
+                local banner_text_color = "#FFFFFF"
+                local banner_height = "2rem"
+                local banner_font_size = "1rem"
+
+                -- Try to match the classification level
+                local raw_level = annotations[ANNOTATIONS.CLASSIFICATION_LEVEL]
+                if raw_level then
+                  local normalized_level = raw_level:lower()
+                  local canonical = classification_synonyms[normalized_level]
+                  if canonical and classification_colors[canonical] then
+                    local color_defaults = classification_colors[canonical]
+                    banner_bg_color = color_defaults.bg
+                    banner_text_color = color_defaults.text
+                    banner_text = color_defaults.display_text
+                  end
+                end
+
+                -- Handle individual override annotations if they exist
+                if annotations[ANNOTATIONS.TEXT] then
+                  banner_text = annotations[ANNOTATIONS.TEXT]
+                end
+                if annotations[ANNOTATIONS.BACKGROUND] then
+                  banner_bg_color = annotations[ANNOTATIONS.BACKGROUND]
+                end
+                if annotations[ANNOTATIONS.TEXT_COLOR] then
+                  banner_text_color = annotations[ANNOTATIONS.TEXT_COLOR]
+                end
+                if annotations[ANNOTATIONS.HEIGHT] then
+                  banner_height = annotations[ANNOTATIONS.HEIGHT]
+                end
+                if annotations[ANNOTATIONS.FONT_SIZE] then
+                  banner_font_size = annotations[ANNOTATIONS.FONT_SIZE]
+                end
+
+                -- Check if the bottom banner is enabled
+                local bottom_banner_enabled = false
+                local bottom_value = annotations[ANNOTATIONS.BOTTOM_BANNER]
+                if is_annotation_true(bottom_value) then
+                  bottom_banner_enabled = true
+                  response_handle:logDebug("Bottom banner enabled.")
+                end
+
+                -------------------------------------------------------------------------------------------
+                -- Build the HTML snippets for top (and bottom) banner(s)
+                -------------------------------------------------------------------------------------------
+
+                -- Bottom banner snippet (if enabled)
+                local bottom_banner_html = ""
+                local margin_bottom = "0"
+
+                if bottom_banner_enabled then
+                  bottom_banner_html = string.format([[
+                    <div id="bigbang-banner-bottom"
+                        style="position: fixed; bottom: 0; left: 0; width: 100svw; z-index: 9999;
+                                height: %s; background-color: %s; color: %s; text-align: center;
+                                display: flex; align-items: center; justify-content: center; font-family: sans-serif;
+                                font-size: %s; font-weight: bold;">
+                      %s
+                    </div>
+                    <!-- Bottom spacer so content doesn't hide behind the bottom banner -->
+                    <div id="bigbang-banner-bottom-spacer" style="height: %s;"></div>
+                  ]], banner_height, banner_bg_color, banner_text_color,
+                       banner_font_size, banner_text, banner_height)
+
+                  margin_bottom = banner_height
+                end
+                
+                -- Top banner snippet (always present unless custom HTML is provided)
+                local top_banner_html = string.format([[
+                  <div id="bigbang-banner-top"
+                      style="position: fixed; top: 0; left: 0; width: 100svw; z-index: 9999;
+                              height: %s; background-color: %s; color: %s; text-align: center;
+                              display: flex; align-items: center; justify-content: center; font-family: sans-serif;
+                              font-size: %s; font-weight: bold;">
+                    %s
+                  </div>
+                  <script>
+                    /* Injected script to handle fixed elements interfering with the top classification banner */
+                    (function() {
+                      function handleFixedElements(topValue) {
+                        const observer = new MutationObserver((mutations) => {
+                          mutations.forEach((mutation) => {
+                            if (mutation.addedNodes.length) {
+                              mutation.addedNodes.forEach((node) => {
+                                if (node.nodeType === Node.ELEMENT_NODE) {
+                                  checkAndUpdateElement(node, topValue);
+                                  
+                                  const fixedElements = node.querySelectorAll('*');
+                                  fixedElements.forEach((element) => {
+                                    checkAndUpdateElement(element, topValue);
+                                  });
+                                }
+                              });
+                            }
+                          });
+                        });
+
+                        function checkAndUpdateElement(element, topValue) {
+                          if (element.id === 'bigbang-banner-top' || element.id === 'bigbang-banner-bottom') {
+                            return;
+                          }
+                          const style = window.getComputedStyle(element);
+                          if (style.position === 'fixed' && isPositionedRelativeToBody(element)) {
+                            element.style.top = topValue;
+                            
+                            if (style.inset !== 'auto' && style.inset !== '' && style.inset !== 'normal') {
+                              const insetParts = style.inset.split(' ');
+                              if (insetParts.length === 1) {
+                                element.style.inset = topValue;
+                              } else {
+                                insetParts[0] = topValue;
+                                element.style.inset = insetParts.join(' ');
+                              }
+                            }
+                            
+                            console.debug('Updated fixed element:', element);
+                          }
+                        }
+
+                        function isPositionedRelativeToBody(element) {
+                          let parent = element.parentElement;
+                          
+                          while (parent && parent !== document.body && parent !== document.documentElement) {
+                            const parentStyle = window.getComputedStyle(parent);
+                            const parentPosition = parentStyle.position;
+                            
+                            if (parentPosition === 'relative' || 
+                                parentPosition === 'absolute' || 
+                                parentPosition === 'fixed' || 
+                                parentPosition === 'sticky') {
+                              return false;
+                            }
+                            
+                            if (parentStyle.transform !== 'none' || 
+                                parentStyle.filter !== 'none' || 
+                                parentStyle.willChange === 'transform' || 
+                                parentStyle.willChange === 'perspective' ||
+                                parseInt(parentStyle.zIndex) !== 0 && parentStyle.zIndex !== 'auto') {
+                              return false;
+                            }
+                            
+                            parent = parent.parentElement;
+                          }
+                          
+                          return true;
+                        }
+
+                        observer.observe(document.documentElement, {
+                          childList: true,
+                          subtree: true
+                        });
+
+                        const existingFixedElements = document.querySelectorAll('*');
+                        existingFixedElements.forEach((element) => {
+                          checkAndUpdateElement(element, topValue);
+                        });
+
+                        return observer;
+                      }
+
+                      document.addEventListener('DOMContentLoaded', function() {
+                        const topOffset = '%s';
+
+                        var body = document.body;
+                        if (body) {
+                          body.style.marginTop = '%s';
+                          body.style.marginBottom = '%s';
+                        }
+                        
+                        window.fixedElementsObserver = handleFixedElements(topOffset);
+                      });
+                    })();
+                  </script>
+                ]], banner_height, banner_bg_color, banner_text_color, banner_font_size, banner_text, banner_height, banner_height, banner_height, margin_bottom)
+
+
+                -- Combine it all together
+                local final_banner_html = top_banner_html .. "\n" .. bottom_banner_html
+
+                -- Inject the final HTML into the response
+                inject_banner(response_handle, final_banner_html)
+              end
+
+              -----------------------------------------------------------------------------------------------
+
+              function inject_banner(response_handle, banner_html)
+                local body = response_handle:body()
+                if not body then return end
+
+                local content = body:getBytes(0, body:length())
+                if not content or #content == 0 then
+                  response_handle:body():setBytes(banner_html)
+                  return
+                end
+
+                -- Find </body> tag position directly
+                local body_tag = "</body>"
+                local pos = content:find(body_tag, 1, true) -- Use plain search, not pattern
+                
+                if pos then
+                  -- Manually construct the new content
+                  local new_content = content:sub(1, pos-1) .. banner_html .. content:sub(pos)
+                  response_handle:body():setBytes(new_content)
+                else
+                  -- No </body> tag found, just prepend
+                  local new_content = banner_html .. content
+                  response_handle:body():setBytes(new_content)
+                end
+              end
+
