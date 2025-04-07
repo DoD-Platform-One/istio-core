@@ -1,5 +1,4 @@
 # How to upgrade the Istio Base and Istiod Package charts
-#### This Document is a work in progress and will need to be re-evaluated prior to graduating packages from Sandbox
 
 1. Checkout the branch that renovate created. This branch will have the image tag updates and typically some other necessary version changes that you will want. You can either work off of this branch or branch off of it.
 1. Update via `kpt`:
@@ -11,12 +10,12 @@
     Or if you'd like to pull down upstream to a fresh `DIR` and manually merge in the changes yourself:
     ```bash
     # get a fresh VERSION of the upstream chart to DIR
-    VERSION=1.23.2
+    VERSION=1.25.1
     DIR=./fresh
     kpt pkg get "https://github.com/istio/istio.git/manifests/charts/base@$VERSION" "$DIR/base"
     kpt pkg get "https://github.com/istio/istio.git/manifests/charts/istio-control/istio-discovery@$VERSION" "$DIR/istiod"
     ```
-1. Update version references for the `/chart/Chart.yaml`, `chart/charts/base/Chart.yaml` and `chart/charts/istiod/Chart.yaml`. `version` should be `<version>-bb.0` (ex: `1.23.3-bb.0`) and `appVersion` should be `<version>` (ex: `1.23.3`). Also validate that the BB annotation for the main Istio version is updated (leave the Tetrate version as-is unless you are updating those images).
+1. Update version references for the `/chart/Chart.yaml`, `chart/charts/base/Chart.yaml` and `chart/charts/istiod/Chart.yaml`. `version` should be `<version>-bb.0` (ex: `1.25.1-bb.0`) and `appVersion` should be `<version>` (ex: `1.25.1`). Also validate that the BB annotation for the main Istio version is updated (leave the Tetrate version as-is unless you are updating those images).
 1. Verify that chart/charts/istiod/values.yaml `tag` and `tidTAG` have been updated to the new version.
 1. Add a changelog entry for the update. At minimum mention updating the image versions.
 1. Update the readme following the [steps in Gluon](https://repo1.dso.mil/platform-one/big-bang/apps/library-charts/gluon/-/blob/master/docs/bb-package-readme.md).
@@ -45,10 +44,10 @@ istioCore:
     branch: "renovate/ironbank"
 ```
 
-The istioGatewayPublic also needs to be updated.
+The istioGateway package also needs to be updated.
 
 ```
-istioGatewayPublic:
+istioGateway:
   enabled: true
   <other config/labels>
   ...
@@ -64,9 +63,9 @@ istioGatewayPublic:
 
 ⚠️ Always make sure your local bigbang repo is current before deploying.
 
-1. Switch to the Bigbang repo `istio-sandbox` branch
+1. Switch to the Bigbang repo `feature` branch
     ```
-    git checkout istio-sandbox
+    git checkout feature
     ```
 
 1. Export your Ironbank/Harbor credentials (this can be done in your `~/.bashrc` or `~/.zshrc` file if desired). These specific variables are expected by the `k3d-dev.sh` script when deploying metallb, and are referenced in other commands for consistency:
@@ -143,7 +142,7 @@ This will deploy the following apps for testing:
 - Jaeger, Kiali and Monitoring (including Grafana), all with SSO enabled
 - Optionally Keycloak
 
-## ## TODO Update Section - Validation/Testing Steps
+## Validation/Testing Steps
 
 ⚠️ For testing with a local Keycloak instance, you will need to manually register or create an account as an admin before proceeding with the below tests. For more info please reference the Keycloak [DEVELOPMENT_MAINTENANCE.md](https://repo1.dso.mil/big-bang/product/packages/keycloak/-/blob/main/docs/DEVELOPMENT_MAINTENANCE.md).
 
@@ -165,32 +164,103 @@ Some things aren't tested by the package pipeline, but are tested by the BigBang
 - ./chart/templates/bigbang/istio/authorizationPolicies/template.yaml
 - ./chart/templates/bigbang/peerAuthentication.yaml
 
-### Istio Operator
-
-- ./chart/templates/bigbang/istio-operator-rolebinding-openshift-scc.yaml
-- ./chart/templates/bigbang/networkpolicies/additional-networkpolicies.yaml
-- ./chart/templates/bigbang/networkpolicies/default-deny.yaml
-- ./chart/templates/bigbang/networkpolicies/egress-kube-api.yaml
-- ./chart/templates/bigbang/networkpolicies/ingress-scraping.yaml
-- ./chart/templates/bigbang/openshift-cr-crb-istio-operator.yaml
-
 ## Instructions for Integration Testing
 
 See the [Big Bang Doc](https://repo1.dso.mil/big-bang/bigbang/-/blob/master/docs/developer/test-package-against-bb.md?ref_type=heads)
 
 ## Modifications made to the upstream chart
 
-### [chart/charts/istiod/values.yaml](../chart/charts/istiod/values.yaml)
+### [chart/charts/base/crds/crd-all.gen.yaml](../chart/charts/base/crds/crd-all.gen.yaml)
 
-- Ensure the following remains under the `meshConfig` section to enable standard out logging and enforce a minimum TLS version for mTLS:
+- Moved to the `chart/charts/base/crds` location from `chart/charts/base/files` so that [the special helm folder](https://helm.sh/docs/chart_best_practices/custom_resource_definitions/#method-1-let-helm-do-it-for-you): `crds` installs the crds during deployment.
+
+
+### [chart/charts/base/templates/crds.yaml](../chart/charts/base/templates/crds.yaml)
+
+- Updated path for `crd-all.gen.yaml` in 2 places to reflect the above change.
+
+### [chart/charts/base/values.yaml](../chart/charts/base/values.yaml)
+
+Add this under `global:`
+```
+    # Adds a default EnvoyFilter to increase the security of the Istio cluster adding the following headers to all gateway-enabled Virtual Services:
+    # Strict-Transport-Security: max-age=31536000; includeSubDomains
+    # X-Frame-Options: SAMEORIGIN
+    # X-Content-Type-Options: nosniff
+    # Referrer-Policy: strict-origin
+    defaultSecurityHeaders:
+      enabled: true
+```
+Add this:
+```
+  # -- Custom EnvoyFilters. https://istio.io/latest/docs/reference/config/networking/envoy-filter/
+  envoyFilters:
+    []
+    # # For each filter, specify `name`, `namespace`, and `spec` fields
+    # # The following example configures ratelimits for the domain foo.com
+    # - name: ratelimits
+    #   namespace: istio-system
+    #   spec:
+    #     configPatches:
+    #       - applyTo: VIRTUAL_HOST
+    #         match:
+    #           context: GATEWAY
+    #           routeConfiguration:
+    #             vhost:
+    #               domainName: "foo.com"
+    #         patch:
+    #           operation: MERGE
+    #           value:
+    #             rate_limits:
+    #               actions:
+    #                 - request_headers:
+    #                     header_name: "authorization"
+    #                     descriptor_key: "jwt"
+    #                 - request_headers:
+    #                     header_name: ":path"
+    #                     descriptor_key: "path"
 
 ```
+
+### [chart/charts/istiod/values.yaml](../chart/charts/istiod/values.yaml)
+
+- Update the following under the `meshConfig` section to enable standard out logging and enforce a minimum TLS version for mTLS:
+
+```
+  meshConfig:
+    enablePrometheusMerge: true
     accessLogFile: /dev/stdout
     meshMTLS:
       minProtocolVersion: TLSV1_2
 ```
 
-- Ensure the following mTLS section remains so peer authenication and mTLS work as expected:
+- Set default images
+```
+  # Default hub for Istio images.
+  # Releases are published to docker hub under 'istio' project.
+  # Dev builds from prow are on gcr.io
+  hub: "registry1.dso.mil/ironbank/opensource/istio"
+  # Default tag for Istio images.
+  tag: "1.25.1"
+```
+
+- Add Tetrate fips
+```
+  # -- Tetrate Istio Distribution - Tetrate provides FIPs verified Istio and Envoy software and support,
+  # validated through the FIPs Boring Crypto module.
+  # Find out more from Tetrate - https://www.tetrate.io/tetrate-istio-subscription
+  enterprise: false
+  tidHub: registry1.dso.mil/ironbank/tetrate/istio
+  tidTag: 1.25.1-tetratefips0
+```
+
+- Set image pull secrets to private registry
+```
+  imagePullSecrets: 
+    - private-registry
+```
+
+- Update the mTLS section so peer authenication and mTLS work as expected:
 
 ```
 mtls:

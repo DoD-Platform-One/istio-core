@@ -2,8 +2,8 @@ apiVersion: v2
 name: istio-core
 description: Helm umbrella chart for istio
 type: application
-version: 1.23.3-bb.4
-appVersion: 1.23.3
+version: 1.25.1-bb.0
+appVersion: 1.25.1
 keywords:
   - istio
   - istiod
@@ -24,8 +24,8 @@ annotations:
     [here](https://istio.io/latest/news/releases/).
 dependencies:
   - name: base
-    version: 1.23.3
+    version: 1.25.1
     repository: file://chart/charts/base
   - name: istiod
-    version: 1.23.3
+    version: 1.25.1
     repository: file://chart/charts/istiod

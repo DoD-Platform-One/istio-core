@@ -1,3 +1,4 @@
+# TODO BML istiodRemote.injectionURL is invalid to set if `istiodRemote.enabled` is false, we should express that.
 {{- /* Core defines the common configuration used by all webhook segments */}}
 {{/* Copy just what we need to avoid expensive deepCopy */}}
 {{- $whv := dict
@@ -50,6 +51,12 @@ metadata:
     operator.istio.io/component: "Pilot"
     app: sidecar-injector
     release: {{ .Release.Name }}
+    app.kubernetes.io/name: "istiod"
+    {{- include "istio.labels" . | nindent 4 }}
+{{- if $.Values.sidecarInjectorWebhookAnnotations }}
+  annotations:
+{{ toYaml $.Values.sidecarInjectorWebhookAnnotations | indent 4 }}
+{{- end }}
 webhooks:
 {{- /* Set up the selectors. First section is for revision, rest is for "default" revision */}}
 
