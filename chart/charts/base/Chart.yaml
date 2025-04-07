@@ -1,7 +1,7 @@
 apiVersion: v2
 name: base
-version: 1.23.3-bb.0
-appVersion: 1.23.3
+version: 1.25.1-bb.0
+appVersion: 1.25.1
 description: Helm chart for deploying Istio cluster resources and CRDs
 keywords:
   - istio
@@ -10,4 +10,4 @@ sources:
 icon: https://istio.io/latest/favicons/android-192x192.png
 annotations:
   bigbang.dev/upstreamReleaseNotesMarkdown: |
-    - [Find upstream chart's release notes and CHANGELOG here](https://istio.io/latest/news/releases/1.23.x/announcing-1.23.2/)
+    - [Find our upstream chart's CHANGELOG here](https://istio.io/latest/news/releases/1.25.x/announcing-1.25)

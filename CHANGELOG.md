@@ -4,6 +4,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.25.1-bb.0] - 2025-04-02
+
+### Added
+
+- Updated to match upstream v1.25.1 of istio-base and istiod
+- Added test-values.yaml for pipeline testing
+
+
 ## [1.23.3-bb.4] - 2024-03-27
 
 ### Added
