@@ -239,19 +239,9 @@ Add this:
   # Default hub for Istio images.
   # Releases are published to docker hub under 'istio' project.
   # Dev builds from prow are on gcr.io
-  hub: "registry1.dso.mil/ironbank/opensource/istio"
+  hub: registry1.dso.mil/ironbank/opensource/istio
   # Default tag for Istio images.
-  tag: "1.25.1"
-```
-
-- Add Tetrate fips
-```
-  # -- Tetrate Istio Distribution - Tetrate provides FIPs verified Istio and Envoy software and support,
-  # validated through the FIPs Boring Crypto module.
-  # Find out more from Tetrate - https://www.tetrate.io/tetrate-istio-subscription
-  enterprise: false
-  tidHub: registry1.dso.mil/ironbank/tetrate/istio
-  tidTag: 1.25.1-tetratefips0
+  tag: 1.25.1
 ```
 
 - Set image pull secrets to private registry

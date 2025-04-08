@@ -1,35 +1,63 @@
-# Istio base Helm Chart
+<!-- Warning: Do not manually edit this file. See notes on gluon + helm-docs at the end of this file for more information. -->
+# base
 
-This chart installs resources shared by all Istio revisions. This includes Istio CRDs.
+![Version: 1.25.1-bb.1](https://img.shields.io/badge/Version-1.25.1--bb.1-informational?style=flat-square) ![AppVersion: 1.25.1](https://img.shields.io/badge/AppVersion-1.25.1-informational?style=flat-square) ![Maintenance Track: unknown](https://img.shields.io/badge/Maintenance_Track-unknown-red?style=flat-square)
 
-## Setup Repo Info
+Helm chart for deploying Istio cluster resources and CRDs
 
-```console
-helm repo add istio https://istio-release.storage.googleapis.com/charts
-helm repo update
+## Upstream References
+
+- <https://github.com/istio/istio>
+
+## Upstream Release Notes
+
+- [Find our upstream chart's CHANGELOG here](https://istio.io/latest/news/releases/1.25.x/announcing-1.25)
+
+## Learn More
+
+- [Application Overview](docs/overview.md)
+- [Other Documentation](docs/)
+
+## Pre-Requisites
+
+- Kubernetes Cluster deployed
+- Kubernetes config installed in `~/.kube/config`
+- Helm installed
+
+Install Helm
+
+https://helm.sh/docs/intro/install/
+
+## Deployment
+
+- Clone down the repository
+- cd into directory
+
+```bash
+helm install base chart/
 ```
 
-_See [helm repo](https://helm.sh/docs/helm/helm_repo/) for command documentation._
+## Values
 
-## Installing the Chart
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| _internal_defaults_do_not_set.global.imagePullSecrets | list | `[]` |  |
+| _internal_defaults_do_not_set.global.istioNamespace | string | `"istio-system"` |  |
+| _internal_defaults_do_not_set.global.defaultSecurityHeaders.enabled | bool | `true` |  |
+| _internal_defaults_do_not_set.base.excludedCRDs | list | `[]` |  |
+| _internal_defaults_do_not_set.base.enableCRDTemplates | bool | `true` |  |
+| _internal_defaults_do_not_set.base.validationURL | string | `""` |  |
+| _internal_defaults_do_not_set.base.validationCABundle | string | `""` |  |
+| _internal_defaults_do_not_set.base.enableIstioConfigCRDs | bool | `true` |  |
+| _internal_defaults_do_not_set.defaultRevision | string | `"default"` |  |
+| _internal_defaults_do_not_set.experimental.stableValidationPolicy | bool | `false` |  |
+| _internal_defaults_do_not_set.envoyFilters | list | `[]` | Custom EnvoyFilters. https://istio.io/latest/docs/reference/config/networking/envoy-filter/ |
 
-To install the chart with the release name `istio-base`:
+## Contributing
 
-```console
-kubectl create namespace istio-system
-helm install istio-base istio/base -n istio-system
-```
+Please see the [contributing guide](./CONTRIBUTING.md) if you are interested in contributing.
 
-### Profiles
+---
 
-Istio Helm charts have a concept of a `profile`, which is a bundled collection of value presets.
-These can be set with `--set profile=<profile>`.
-For example, the `demo` profile offers a preset configuration to try out Istio in a test environment, with additional features enabled and lowered resource requirements.
+_This file is programatically generated using `helm-docs` and some BigBang-specific templates. The `gluon` repository has [instructions for regenerating package READMEs](https://repo1.dso.mil/big-bang/product/packages/gluon/-/blob/master/docs/bb-package-readme.md)._
 
-For consistency, the same profiles are used across each chart, even if they do not impact a given chart.
-
-Explicitly set values have highest priority, then profile settings, then chart defaults.
-
-As an implementation detail of profiles, the default values for the chart are all nested under `defaults`.
-When configuring the chart, you should not include this.
-That is, `--set some.field=true` should be passed, not `--set defaults.some.field=true`.
