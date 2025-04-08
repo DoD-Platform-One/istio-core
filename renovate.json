@@ -1,1 +1,50 @@
-{}
+{
+    "baseBranches": ["main"],
+    "configWarningReuseIssue": false,
+    "dependencyDashboard": true,
+    "dependencyDashboardHeader": "- [ ] Sync upstream helm chart version with updated dependencies.",
+    "dependencyDashboardTitle": "Renovate: Upgrade Istio Core Package Dependencies",
+    "draftPR": true,
+    "enabledManagers": ["regex"],
+    "labels": ["istioCore","Big Bang Core","Package Sustainment","kind::maintenance","renovate"],
+    "packageRules": [
+        {
+            "matchDatasources": ["docker"],
+            "groupName": "Ironbank",
+            "registryUrls": ["https://registry1.dso.mil"],
+            "postUpgradeTasks": {
+              "commands": [
+                  "match-chart-yaml-appversion",
+                  "regenerate-helm-docs",
+                  "bump-changelog '- {{{replace 'registry1.dso.mil/' '' depName}}} updated from {{{currentVersion}}} to {{{newVersion}}}'"
+              ],
+              "fileFilters": ["chart/Chart.yaml", "README.md", "CHANGELOG.md"]
+            }
+        },
+        {
+            "matchPackageNames": ["registry1.dso.mil/ironbank/big-bang/base"],
+            "allowedVersions": "!/8.4/"
+        }       
+    ],
+    "regexManagers": [
+        {
+            "fileMatch": [
+              "^chart/charts/istiod/values\\.yaml$"
+            ],
+            "matchStrings": [
+              "tag:\\s+(?<currentValue>.+)"
+            ],
+            "depNameTemplate": "registry1.dso.mil/ironbank/opensource/istio/pilot",
+            "datasourceTemplate": "docker"
+        },      
+        {
+            "fileMatch": ["^chart/Chart\\.yaml$"],
+            "matchStrings": [
+                "image:[^\\S\\r\\n]+(?<depName>.+):(?<currentValue>.+)"
+            ],
+            "datasourceTemplate": "docker"
+        }
+    ],
+    "separateMajorMinor": false,
+    "postUpdateOptions": ["helmUpdateSubChartArchives"]
+}
