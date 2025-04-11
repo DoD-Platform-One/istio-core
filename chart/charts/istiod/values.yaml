@@ -209,6 +209,11 @@ _internal_defaults_do_not_set:
     accessLogFile: /dev/stdout
     meshMTLS:
       minProtocolVersion: TLSV1_2
+    ## Default Settings for tracing collectors are set in Big Bang chart/templates/istio-core/values.yaml
+    enableTracing: false
+    defaultConfig:
+      tracing: {}
+
 
   experimental:
     stableValidationPolicy: false
