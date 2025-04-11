@@ -1,0 +1,6 @@
+global:
+  variant: ""
+  tag: 1.25.1
+  hub: registry1.dso.mil/ironbank/opensource/istio
+  imagePullSecrets:
+  - private-registry

@@ -267,3 +267,8 @@ networkPolicies:
 monitoring:
   enabled: false
 ```
+
+## Modifications made to the upstream chart
+### Istiod
+### [chart/charts/istiod/chart/values.yaml](../chart/charts/istiod/values.yaml)
+- Added tracing collector configurations and comments (~lines 208-211)
